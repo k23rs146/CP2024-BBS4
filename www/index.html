@@ -57,7 +57,7 @@ function updateCharacterCount(inputId, counterId, maxLength) {
     
     input.on('input', () => {
         const length = input.val().length;
-        counter.text(`${length}/${maxLength}`);
+        counter.text(`残り文字数: ${maxLength-length} 文字`);
     
         if (length > maxLength) {
             counter.addClass('error');
@@ -174,7 +174,11 @@ function createPostElement(post) {
                 削除
             </button>
         </div>
-    ` : '';
+    ` : ''; 
+    const liked = localStorage.getItem(`liked-${post.id}`) === 'true';
+    const likeCount = post.likeCount || 0;
+
+
 
     return `
         <div class="post" id="post-${post.id}">
@@ -205,9 +209,46 @@ function createPostElement(post) {
                     </span>
                 ` : ''}
             </div>
+            <div class="like-section">
+                <button class="like-button" onclick="toggleLike('${post.id}')">
+                    ${liked ? 'いいねを取り消す' : 'いいね'} 
+                </button>
+                <span class="like-count">${likeCount} いいね</span>
+            </div>
         </div>
     `;
 }
+
+function toggleLike(postId) {
+    // ローカルでの「いいね」の状態を管理
+    const currentState = localStorage.getItem(`liked-${postId}`) === 'true';
+    const newState = !currentState;
+
+    // 新しい「いいね」状態をローカルに保存
+    localStorage.setItem(`liked-${postId}`, newState);
+
+    // 投稿の「いいね数」を更新（ローカルの状態に基づく）
+    const postElement = document.getElementById(`post-${postId}`);
+    const likeCountElement = postElement.querySelector('.like-count');
+
+    let likeCount = parseInt(likeCountElement.textContent.split(' ')[0], 10);
+
+    // 「いいね」した場合、カウントを増やす
+    if (newState) {
+        likeCount++;
+    } else {
+        likeCount--;
+    }
+
+    // いいね数のUI更新
+    likeCountElement.textContent = `${likeCount} いいね`;
+
+    // ボタンのテキストも変更
+    const likeButton = postElement.querySelector('.like-button');
+    likeButton.textContent = newState ? 'いいねを取り消す' : 'いいね';
+}
+
+
 
 // 投稿の表示処理
 function renderPosts(posts) {
@@ -553,7 +594,7 @@ window.addEventListener('unload', function() {
                 <label for="contentInput">投稿内容</label>
                 <textarea id="contentInput" class="form-control" 
                           placeholder="投稿内容を入力してください"></textarea>
-                <small class="character-count" id="contentCount">0/1000</small>
+                <small class="character-count" id="contentCount">残り文字数: 1000 文字</small>
             </div>
             <div class="button-group">
                 <button id="postButton" class="btn-primary">投稿する</button>
@@ -588,7 +629,7 @@ window.addEventListener('unload', function() {
             <div class="modal-body">
                 <div class="form-group">
                     <textarea id="editContent" class="form-control"></textarea>
-                    <small class="character-count" id="editContentCount">0/1000</small>
+                    <small class="character-count" id="editContentCount">残り文字数: 1000 文字</small>
                 </div>
             </div>
             <div class="modal-footer">
